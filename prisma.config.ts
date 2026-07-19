@@ -1,7 +1,9 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { defineConfig, env } from "prisma/config";
 
-console.log("DATABASE_URL:", env("DATABASE_URL")); // Log the DATABASE_URL to verify it's being read correctly
+dotenv.config({
+  path: process.env.PRISMA_ENV_FILE ?? ".env",
+});
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

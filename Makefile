@@ -37,18 +37,23 @@ migrate-create:
 generate:
 	pnpm prisma generate
 
-test-db-create:
-	psql -h localhost -p 5433 -U tracevault -c "CREATE DATABASE tracevault_test;" || true
-
-test-db-drop:
-	psql -h localhost -p 5433 -U tracevault -c "DROP DATABASE IF EXISTS tracevault_test;"
-
-test-db-migrate:
-	DATABASE_URL=postgresql://tracevault:tracevault@localhost:5433/tracevault_test pnpm prisma migrate deploy
-
 test:
-	make test-db-drop
-	make test-db-create
-	make test-db-migrate
-	DATABASE_URL=postgresql://tracevault:tracevault@localhost:5433/tracevault_test pnpm jest --runInBand
-	make test-db-drop
+	-docker rm -f $(DB_CONTAINER)_test
+	-docker volume rm $(DB_VOLUME)_test
+
+	docker run -d --name $(DB_CONTAINER)_test \
+		-e POSTGRES_USER=tracevault \
+		-e POSTGRES_PASSWORD=tracevault \
+		-e POSTGRES_DB=tracevault_test \
+		-p 5435:5432 \
+		-v $(DB_VOLUME)_test:/var/lib/postgresql/data \
+		postgres:16
+
+	node scripts/wait-for-db.mjs $(DB_CONTAINER)_test
+
+	node scripts/migrate-test.mjs
+
+	pnpm test
+
+	-docker rm -f $(DB_CONTAINER)_test
+	-docker volume rm $(DB_VOLUME)_test

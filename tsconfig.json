@@ -7,7 +7,8 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"],
+    "isolatedModules": true,
+    "types": ["node", "jest"],
   },
   "include": [
     "src/**/*.ts"

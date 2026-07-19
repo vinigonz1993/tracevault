@@ -1,1 +1,5 @@
-process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
+import dotenv from "dotenv";
+
+dotenv.config({
+  path: ".env.test",
+});
