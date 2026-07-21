@@ -1,6 +1,8 @@
 import axios from "axios";
 import { faker } from "@faker-js/faker";
 import { prisma } from "../db/prisma.js";
+import { createTestOrganizations } from "./factories/organizations.factory.js";
+import { createTestUsers } from "./factories/users.factory.js";
 import app from "../app.js";
 import { Server } from "node:http";
 
@@ -21,15 +23,11 @@ describe("Organizations API", () => {
     });
 
     beforeEach(async () => {
+        await prisma.user.deleteMany();
         await prisma.organization.deleteMany();
 
-        await prisma.organization.createMany({
-            data: Array.from({ length: 3 }).map(() => ({
-                name: faker.company.name(),
-                slug: `${faker.helpers.slugify(faker.company.name()).toLowerCase()}-${faker.string.uuid()}`,
-                description: faker.company.catchPhrase(),
-            })),
-        });
+        const organizations = await createTestOrganizations();
+        await createTestUsers(organizations);
     });
 
     afterAll(async () => {

@@ -72,3 +72,48 @@ export const createOrganization = async (
     });
   }
 };
+
+
+export const listOrganizationUsers = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { organizationId } = req.params;
+
+    if (typeof organizationId !== "string") {
+      return res.status(400).json({
+        message: "Invalid organization ID",
+      });
+    }
+
+    const organization = await prisma.organization.findUnique({
+      where: {
+        id: organizationId,
+      },
+      select: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!organization) {
+      return res.status(404).json({
+        message: "Organization not found",
+      });
+    }
+
+    res.json(organization.users);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to fetch organization users",
+    });
+  }
+};
