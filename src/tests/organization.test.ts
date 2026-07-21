@@ -1,5 +1,4 @@
 import axios from "axios";
-import { faker } from "@faker-js/faker";
 import { prisma } from "../db/prisma.js";
 import { createTestOrganizations } from "./factories/organizations.factory.js";
 import { createTestUsers } from "./factories/users.factory.js";
