@@ -13,6 +13,7 @@ export const createTestUsers = async (
         data: {
           name: faker.person.fullName(),
           email: faker.internet.email(),
+          password: faker.internet.password(),
           organizations: {
             connect: {
               id: organization.id,
