@@ -213,9 +213,7 @@ importers:
       '@prisma/client':
         specifier: ^7.8.0
         version: 7.8.0(prisma@7.8.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3))(typescript@5.9.3)
-      bcrypt:
-        specifier: ^6.0.0
-        version: 6.0.0
+
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -235,9 +233,6 @@ importers:
       '@jest/globals':
         specifier: ^30.4.1
         version: 30.4.1
-      '@types/bcrypt':
-        specifier: ^6.0.0
-        version: 6.0.0
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6

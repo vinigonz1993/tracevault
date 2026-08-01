@@ -1,19 +1,15 @@
 .PHONY: install generate migrate migrate-create dev studio db-push db-reset
 
-install:
-	pnpm install
-
-studio:
-	pnpm prisma studio
-
-dev:
-	pnpm dev
-
 DB_CONTAINER=tracevault-postgres
 DB_VOLUME=tracevault_postgres
 
-db-up:
+install:
+	pnpm install
+	pnpm prisma generate
+
+db:
 	docker start $(DB_CONTAINER) || docker run -d --name $(DB_CONTAINER) -e POSTGRES_USER=tracevault -e POSTGRES_PASSWORD=tracevault -e POSTGRES_DB=tracevault -p 5433:5432 -v $(DB_VOLUME):/var/lib/postgresql/data postgres:16
+	pnpm prisma migrate deploy
 
 db-down:
 	docker stop $(DB_CONTAINER)
@@ -25,17 +21,9 @@ db-reset:
 	docker volume rm $(DB_VOLUME) || exit 0
 	docker run -d --name $(DB_CONTAINER) -e POSTGRES_USER=tracevault -e POSTGRES_PASSWORD=tracevault -e POSTGRES_DB=tracevault -p 5433:5432 -v $(DB_VOLUME):/var/lib/postgresql/data postgres:16
 
-db-logs:
-	docker logs -f $(DB_CONTAINER)
-
-migrate-reset:
-	pnpm prisma migrate reset
-
-migrate-create:
-	pnpm prisma migrate dev --name $(name)
-
-generate:
+app:
 	pnpm prisma generate
+	pnpm run dev
 
 test:
 	-docker rm -f $(DB_CONTAINER)_test
