@@ -1,4 +1,4 @@
-.PHONY: install generate migrate migrate-create dev studio db-push db-reset
+.PHONY: install generate migrate migrate-create dev studio db db-down db-reset app test web
 
 DB_CONTAINER=tracevault-postgres
 DB_VOLUME=tracevault_postgres
@@ -24,6 +24,9 @@ db-reset:
 app:
 	pnpm prisma generate
 	pnpm run dev
+
+web:
+	pnpm --dir src/web dev
 
 test:
 	-docker rm -f $(DB_CONTAINER)_test
