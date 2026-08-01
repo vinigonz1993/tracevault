@@ -266,7 +266,7 @@ make test
 | Environment |   Port | Database         |
 | ----------- | -----: | ---------------- |
 | Development | `5433` | `tracevault`     |
-| Test        | `5435` | `tracevault_test |
+| Test        | `5435` | `tracevault_test` |
 
 ## Project Structure
 
