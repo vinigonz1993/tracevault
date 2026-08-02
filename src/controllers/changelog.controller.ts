@@ -1,22 +1,36 @@
 import { Request, Response } from "express";
 import { prisma } from "../db/prisma.js";
+import { changeLogEmitter } from "../services/changelogemitter.js";
 
 export const getChangeLogs = async (req: Request, res: Response) => {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
     const pageSize = Math.max(Number(req.query.pageSize) || 20, 1);
+    const objectId =
+      typeof req.query.objectId === "string"
+        ? req.query.objectId.trim()
+        : undefined;
 
     const skip = (page - 1) * pageSize;
 
+    const where = objectId
+      ? {
+          objectId,
+        }
+      : undefined;
+
     const [changeLogs, total] = await Promise.all([
       prisma.changeLog.findMany({
+        where,
         skip,
         take: pageSize,
         orderBy: {
           createdAt: "desc",
         },
       }),
-      prisma.changeLog.count(),
+      prisma.changeLog.count({
+        where,
+      }),
     ]);
 
     res.status(200).json({
@@ -36,10 +50,17 @@ export const getChangeLogs = async (req: Request, res: Response) => {
 
 export const createAuditLog = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   try {
-    const { objectId, objectType, operation, previousState, currentState, userId } = req.body;
+    const {
+      objectId,
+      objectType,
+      operation,
+      previousState,
+      currentState,
+      userId,
+    } = req.body;
 
     const newChangeLog = await prisma.changeLog.create({
       data: {
@@ -51,6 +72,8 @@ export const createAuditLog = async (
         userId,
       },
     });
+
+    changeLogEmitter.emit("created", newChangeLog);
 
     res.status(201).json(newChangeLog);
   } catch (error) {

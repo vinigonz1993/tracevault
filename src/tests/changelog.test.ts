@@ -113,5 +113,42 @@ describe("Change Log endpoints", () => {
         totalPages: 2,
       });
     });
+
+    it("should filter change logs by objectId and objectType", async () => {
+      await createChangeLog({
+        objectId: "123",
+        objectType: "Patient",
+        operation: "update",
+      });
+
+      await createChangeLog({
+        objectId: "456",
+        objectType: "Order",
+        operation: "create",
+      });
+
+      const response = await request(app)
+        .get("/change-logs")
+        .query({
+          objectId: "123",
+          objectType: "Patient",
+        });
+
+      expect(response.status).toBe(200);
+
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0]).toMatchObject({
+        objectId: "123",
+        objectType: "Patient",
+        operation: "update",
+      });
+
+      expect(response.body.pagination).toEqual({
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      });
+    });
   });
 });

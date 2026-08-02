@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16
+    container_name: tracevault-postgres
+    environment:
+      POSTGRES_USER: tracevault
+      POSTGRES_PASSWORD: tracevault
+      POSTGRES_DB: tracevault
+    ports:
+      - "5433:5432"
+    volumes:
+      - tracevault_postgres:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tracevault-app
+    environment:
+      DATABASE_URL: postgresql://tracevault:tracevault@db:5432/tracevault
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: sh -c "pnpm prisma generate && pnpm prisma migrate deploy && pnpm run dev"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: tracevault-web
+    ports:
+      - "5173:5173"
+    depends_on:
+      - app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app/src/web
+    command: ["pnpm", "dev", "--host", "0.0.0.0"]
+
+volumes:
+  tracevault_postgres:

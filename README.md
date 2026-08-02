@@ -1,184 +1,137 @@
 # TraceVault
 
-TraceVault is an API for tracking changes made to application objects, including the previous state, current state, operation, and user responsible for the change.
+TraceVault is an audit log service for tracking changes made to application objects.
+
+It provides:
+
+* Change log creation and retrieval
+* Pagination and object ID search
+* Previous and current state tracking
+* Change visualization
+* Real-time updates using Server-Sent Events (SSE)
+* REST API
+* React/Vite web interface
+* PostgreSQL database
+* Docker Compose development environment
+
+## Architecture
+
+```text
+                         ┌──────────────────┐
+                         │   React / Vite   │
+                         │      Web UI      │
+                         └────────┬─────────┘
+                                  │
+                         REST API / SSE
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │   Express API    │
+                         │                  │
+                         │   TraceVault     │
+                         └────────┬─────────┘
+                                  │
+                               Prisma
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │   PostgreSQL     │
+                         └──────────────────┘
+```
 
 ## Requirements
 
-Make sure you have the following installed:
+* Docker
+* Docker Compose
+* Node.js
+* pnpm
 
-* [Node.js](https://nodejs.org/)
-* [pnpm](https://pnpm.io/)
-* [Docker](https://www.docker.com/)
-* `make`
+## Getting Started
 
-Docker must be running before starting the database.
-
-## Installation
-
-Install the project dependencies and generate the Prisma client:
+Install the project dependencies:
 
 ```bash
 make install
 ```
 
-## Environment Variables
-
-Check `.env.example` for the required environment variables.
-
-Configure the database connection in `.env`.
-
-Example:
-
-```env
-DATABASE_URL=postgresql://tracevault:tracevault@localhost:5433/tracevault
-```
-
-Do not commit `.env` to Git.
-
-## Database
-
-TraceVault uses PostgreSQL running in Docker.
-
-### Start the database
+Start the complete application stack:
 
 ```bash
-make db
+make compose-up
 ```
 
-This starts the `tracevault-postgres` Docker container and runs all pending Prisma migrations.
+This starts:
 
-The PostgreSQL server is available on:
+* PostgreSQL
+* TraceVault API
+* TraceVault Web
 
-```text
-localhost:5433
-```
+The application will be available at:
 
-Default credentials:
+* **Web:** http://localhost:5173
+* **API:** http://localhost:3000
 
-```text
-User:     tracevault
-Password: tracevault
-Database: tracevault
-Port:     5433
-```
+## Docker Compose
 
-### Stop the database
+Start the entire stack:
 
 ```bash
-make db-down
+make compose-up
 ```
 
-This stops and removes the PostgreSQL container while preserving the database volume.
-
-### Reset the database
-
-To completely remove the database and all its data:
+Stop the stack:
 
 ```bash
-make db-reset
+make compose-down
 ```
 
-The database will be recreated when you run:
+Rebuild the containers:
 
 ```bash
-make db
+docker compose up --build
 ```
 
-## Running the Application
-
-Start the application with:
+View logs:
 
 ```bash
-make app
+docker compose logs -f
 ```
 
-For a fresh setup:
+View logs for an individual service:
 
 ```bash
-make install
-make db
-make app
+docker compose logs -f app
+docker compose logs -f web
+docker compose logs -f db
 ```
 
-## Tests
+## Frontend
 
-Run the complete test suite with:
+The TraceVault web interface provides a searchable and paginated view of change logs.
 
-```bash
-make test
-```
+Users can:
 
-Tests use a separate PostgreSQL database running on port `5435`.
+* Search by object ID
+* Browse paginated change logs
+* View operation types
+* View users and timestamps
+* Inspect the previous and current state
+* See changes between object states
+* Receive new change logs in real time
 
-The test command creates a fresh database, runs the migrations, executes the tests, and removes the test database afterward.
+### Change Log List
 
-Test database credentials:
+<p align="center">
+  <img src="docs/tracevault-table.png" width="90%" />
+</p>
 
-```text
-User:     tracevault
-Password: tracevault
-Database: tracevault_test
-Port:     5435
-```
+### Change Log Details
 
-## Prisma
-
-Generate the Prisma client:
-
-```bash
-pnpm prisma generate
-```
-
-Create a migration:
-
-```bash
-pnpm prisma migrate dev --name <migration-name>
-```
-
-For example:
-
-```bash
-pnpm prisma migrate dev --name add_change_log
-```
-
-Apply existing migrations:
-
-```bash
-pnpm prisma migrate deploy
-```
-
-Open Prisma Studio:
-
-```bash
-pnpm prisma studio
-```
+<p align="center">
+  <img src="docs/tracevault-details.png" width="90%" />
+</p>
 
 ## API
-
-### Create Change Log
-
-```http
-POST /change-logs
-```
-
-Example request:
-
-```json
-{
-  "objectId": "order-123",
-  "objectType": "Order",
-  "operation": "UPDATE",
-  "previousState": {
-    "status": "PENDING",
-    "total": 99.99
-  },
-  "currentState": {
-    "status": "COMPLETED",
-    "total": 99.99
-  },
-  "userId": "user-123"
-}
-```
 
 ### Get Change Logs
 
@@ -186,107 +139,245 @@ Example request:
 GET /change-logs
 ```
 
-Pagination is supported using `page` and `pageSize`:
+Pagination:
 
 ```http
 GET /change-logs?page=1&pageSize=20
+```
+
+Search by object ID:
+
+```http
+GET /change-logs?objectId=785612834
 ```
 
 Example response:
 
 ```json
 {
-  "data": [
-    {
-      "id": "123",
-      "objectId": "order-123",
-      "objectType": "Order",
-      "operation": "UPDATE",
-      "previousState": {
-        "status": "PENDING",
-        "total": 99.99
-      },
-      "currentState": {
-        "status": "COMPLETED",
-        "total": 99.99
-      },
-      "userId": "user-123",
-      "createdAt": "2026-08-01T12:00:00.000Z"
-    }
-  ],
+  "data": [],
   "pagination": {
     "page": 1,
     "pageSize": 20,
-    "total": 1,
-    "totalPages": 1
+    "total": 0,
+    "totalPages": 0
   }
 }
 ```
 
-## Development Workflow
+### Create Change Log
 
-### 1. Install dependencies
-
-```bash
-make install
+```http
+POST /change-logs
 ```
 
-### 2. Start the database
+Example:
 
-```bash
-make db
+```json
+{
+  "objectId": "785612834",
+  "objectType": "order",
+  "operation": "update",
+  "previousState": {
+    "status": "pending"
+  },
+  "currentState": {
+    "status": "completed"
+  },
+  "userId": "user-2387"
+}
 ```
 
-### 3. Start the application
+### Real-Time Change Log Events
+
+TraceVault uses Server-Sent Events to notify connected clients when a new change log is created.
+
+```http
+GET /change-logs/events
+```
+
+The server sends events using the `change-log-created` event:
+
+```text
+event: change-log-created
+data: {...}
+```
+
+The frontend can maintain a persistent connection to this endpoint and update the UI whenever a new audit record is created.
+
+## Data Model
+
+Change logs are stored using the following Prisma model:
+
+```prisma
+model ChangeLog {
+  id            String   @id @default(uuid())
+  objectId      String
+  objectType    String
+  operation     String
+  previousState Json?
+  currentState  Json
+  userId        String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([objectType, objectId])
+  @@index([userId])
+  @@map("change_logs")
+}
+```
+
+### Fields
+
+| Field           | Description                                        |
+| --------------- | -------------------------------------------------- |
+| `id`            | Unique change log identifier                       |
+| `objectId`      | ID of the object that changed                      |
+| `objectType`    | Type of object that changed                        |
+| `operation`     | Operation performed (`create`, `update`, `delete`) |
+| `previousState` | Object state before the change                     |
+| `currentState`  | Object state after the change                      |
+| `userId`        | User responsible for the change                    |
+| `createdAt`     | Time the change was recorded                       |
+
+## Change Visualization
+
+For updates, TraceVault compares `previousState` and `currentState` using `jsondiffpatch`.
+
+This allows the UI to show which fields changed rather than requiring users to manually compare two JSON objects.
+
+For example:
+
+```json
+{
+  "shippingAddress": {
+    "city": "Ottawa"
+  }
+}
+```
+
+changing to:
+
+```json
+{
+  "shippingAddress": {
+    "city": "Toronto"
+  }
+}
+```
+
+is represented as a change to:
+
+```text
+shippingAddress.city
+
+- Ottawa
++ Toronto
+```
+
+## Database
+
+PostgreSQL runs as part of the Docker Compose environment.
+
+Inside Docker, the application connects using:
+
+```text
+postgresql://tracevault:tracevault@db:5432/tracevault
+```
+
+From the host machine:
+
+```text
+postgresql://tracevault:tracevault@localhost:5433/tracevault
+```
+
+Run Prisma migrations:
+
+```bash
+make migrate
+```
+
+Generate the Prisma client:
+
+```bash
+make generate
+```
+
+Reset the development database:
+
+```bash
+make db-reset
+```
+
+## Local Development
+
+The application can also be run without Docker.
+
+Start the API:
 
 ```bash
 make app
 ```
 
-### 4. Run tests
+Start the frontend:
+
+```bash
+make web
+```
+
+Start PostgreSQL:
+
+```bash
+make db
+```
+
+Run tests:
 
 ```bash
 make test
 ```
 
-## Make Commands
-
-| Command         | Description                                        |
-| --------------- | -------------------------------------------------- |
-| `make install`  | Install dependencies and generate Prisma client    |
-| `make db`       | Start PostgreSQL and run migrations                |
-| `make db-down`  | Stop and remove the development database container |
-| `make db-reset` | Completely reset the development database          |
-| `make app`      | Generate Prisma client and start the application   |
-| `make test`     | Create a fresh test database and run tests         |
-| `make studio`   | Open Prisma Studio                                 |
-
-## Database Ports
-
-| Environment |   Port | Database         |
-| ----------- | -----: | ---------------- |
-| Development | `5433` | `tracevault`     |
-| Test        | `5435` | `tracevault_test` |
-
 ## Project Structure
 
 ```text
-.
+tracevault/
 ├── prisma/
-│   ├── migrations/
 │   └── schema.prisma
 ├── scripts/
-│   ├── migrate-test.mjs
-│   └── wait-for-db.mjs
 ├── src/
+│   ├── api/
+│   ├── components/
 │   ├── controllers/
 │   ├── db/
 │   ├── routes/
-│   └── app.ts
-├── tests/
-├── .env.example
-├── .gitignore
+│   ├── services/
+│   ├── web/
+│   │   ├── src/
+│   │   └── vite.config.ts
+│   └── server.ts
+├── docs/
+│   └── images/
+│       ├── changelogs.png
+│       └── changelog-details.png
+├── Dockerfile
+├── docker-compose.yml
 ├── Makefile
 ├── package.json
 └── pnpm-lock.yaml
 ```
+
+## Make Commands
+
+| Command             | Description                                     |
+| ------------------- | ----------------------------------------------- |
+| `make install`      | Install dependencies and generate Prisma client |
+| `make compose-up`   | Build and start the complete Docker stack       |
+| `make compose-down` | Stop the Docker Compose stack                   |
+| `make app`          | Start the API locally                           |
+| `make web`          | Start the frontend locally                      |
+| `make db`           | Start PostgreSQL                                |
+| `make db-down`      | Stop PostgreSQL                                 |
+| `make db-reset`     | Reset the PostgreSQL database                   |
+| `make generate`     | Generate Prisma client                          |
+| `make migrate`      | Run Prisma migrations                           |
+| `make test`         | Run the test suite                              |

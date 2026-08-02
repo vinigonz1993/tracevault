@@ -1,4 +1,4 @@
-.PHONY: install generate migrate migrate-create dev studio db db-down db-reset app test web
+.PHONY: install generate migrate migrate-create dev studio db db-down db-reset app web test docker-up docker-down docker-logs
 
 DB_CONTAINER=tracevault-postgres
 DB_VOLUME=tracevault_postgres
@@ -48,3 +48,12 @@ test:
 
 	-docker rm -f $(DB_CONTAINER)_test
 	-docker volume rm $(DB_VOLUME)_test
+
+container-up:
+	docker compose up --build
+
+container-down:
+	docker compose down
+
+container-logs:
+	docker compose logs -f
