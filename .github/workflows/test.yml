@@ -1,0 +1,57 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.13.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start test database
+        run: |
+          docker rm -f tracevault-postgres_test || true
+          docker volume rm tracevault_postgres_test || true
+
+          docker run -d \
+            --name tracevault-postgres_test \
+            -e POSTGRES_USER=tracevault \
+            -e POSTGRES_PASSWORD=tracevault \
+            -e POSTGRES_DB=tracevault_test \
+            -p 5435:5432 \
+            -v tracevault_postgres_test:/var/lib/postgresql/data \
+            postgres:16
+
+      - name: Wait for database
+        run: node scripts/wait-for-db.mjs tracevault-postgres_test
+
+      - name: Run migrations
+        run: node scripts/migrate-test.mjs
+
+      - name: Run test suite
+        run: pnpm test
+
+      - name: Cleanup test database
+        if: always()
+        run: |
+          docker rm -f tracevault-postgres_test || true
+          docker volume rm tracevault_postgres_test || true
