@@ -11,14 +11,20 @@ export const getChangeLogs = async (req: Request, res: Response) => {
       typeof req.query.objectId === "string"
         ? req.query.objectId.trim()
         : undefined;
+    const objectType =
+      typeof req.query.objectType === "string"
+        ? req.query.objectType.trim()
+        : undefined;
 
     const skip = (page - 1) * pageSize;
 
-    const where = objectId
-      ? {
-          objectId,
-        }
-      : undefined;
+    const where: Record<string, unknown> = {};
+    if (objectId) {
+      where.objectId = objectId;
+    }
+    if (objectType) {
+      where.objectType = objectType;
+    }
 
     const [changeLogs, total] = await Promise.all([
       prisma.changeLog.findMany({

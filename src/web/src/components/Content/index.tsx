@@ -2,6 +2,7 @@ interface ContentProps {
   search: string;
   objectType: string;
   onSearchChange: (value: string) => void;
+  objectTypes: string[];
   onObjectTypeChange: (value: string) => void;
 }
 
@@ -9,6 +10,7 @@ const Content = ({
   search,
   objectType,
   onSearchChange,
+  objectTypes,
   onObjectTypeChange,
 }: ContentProps) => {
   return (
@@ -27,6 +29,18 @@ const Content = ({
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
         />
+        <select
+          className="select"
+          value={objectType}
+          onChange={(event) => onObjectTypeChange(event.target.value)}
+        >
+          <option value="">All Object Types</option>
+          {objectTypes.length > 0 && objectTypes.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

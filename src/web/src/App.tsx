@@ -5,6 +5,7 @@ import Content from "./components/Content";
 import ChangeLogTable from "./components/ChangeLogTable";
 import {
   getChangeLogs,
+  getObjectTypes,
   type ChangeLog,
   type Pagination,
 } from "./api";
@@ -20,6 +21,7 @@ const App = () => {
   });
 
   const [search, setSearch] = useState("");
+  const [objectTypes, setObjectTypes] = useState<string[]>([]);
   const [objectType, setObjectType] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +50,14 @@ const App = () => {
     }
   };
 
+  const loadObjectTypes = async () => {
+    try {
+      const response = await getObjectTypes();
+      setObjectTypes(response);
+    } catch (err) {
+      console.error("Failed to load object types:", err);
+    }
+  };
 
   useEffect(() => {
     const disconnect = connectToChangeLogEvents(
@@ -65,6 +75,10 @@ const App = () => {
   useEffect(() => {
     loadChangeLogs();
   }, [pagination.page, pagination.pageSize, search, objectType]);
+
+  useEffect(() => {
+    loadObjectTypes();
+  }, []);
 
   const handleSearchChange = (value: string) => {
     setPagination((current) => ({
@@ -92,6 +106,7 @@ const App = () => {
         <Content
           search={search}
           objectType={objectType}
+          objectTypes={objectTypes}
           onSearchChange={handleSearchChange}
           onObjectTypeChange={handleObjectTypeChange}
         />

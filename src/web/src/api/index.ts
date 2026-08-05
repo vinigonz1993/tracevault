@@ -39,6 +39,10 @@ export interface ChangeLogsResponse {
   pagination: Pagination;
 }
 
+export interface ObjectTypesResponse {
+  data: string[];
+}
+
 export const getChangeLogs = async (
   params: GetChangeLogsParams = {},
 ): Promise<ChangeLogsResponse> => {
@@ -47,6 +51,11 @@ export const getChangeLogs = async (
   });
 
   return response.data;
+};
+
+export const getObjectTypes = async (): Promise<string[]> => {
+  const response = await api.get<ObjectTypesResponse>("/change-logs/object-types");
+  return response.data.data;
 };
 
 export default api;
