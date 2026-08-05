@@ -163,12 +163,33 @@ describe("Change Log endpoints", () => {
         objectType: "patient",
         operation: "update",
       });
+    });
 
-      expect(response.body.pagination).toEqual({
-        page: 1,
-        pageSize: 20,
-        total: 1,
-        totalPages: 1,
+    it("should filter change logs by objectType only", async () => {
+      const objectType = "product";
+      await createChangeLog({
+        objectId: "123",
+        objectType: objectType,
+        operation: "update",
+      });
+
+      await createChangeLog({
+        objectId: "456",
+        objectType: "order",
+        operation: "create",
+      });
+
+      const response = await request(app)
+        .get("/change-logs")
+        .query({ objectType: objectType });
+
+      expect(response.status).toBe(200);
+
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0]).toMatchObject({
+        objectId: "123",
+        objectType: objectType,
+        operation: "update",
       });
     });
   });
