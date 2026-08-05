@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../db/prisma.js";
-import { changeLogEmitter } from "../services/changelogemitter.js";
+import { changeLogEmitter } from "../services/changeLogEmitter.js";
+import lowercaseStrings from "../utils/lowercaseStrings.js";
 
 export const getChangeLogs = async (req: Request, res: Response) => {
   try {
@@ -64,12 +65,12 @@ export const createAuditLog = async (
 
     const newChangeLog = await prisma.changeLog.create({
       data: {
-        objectId,
-        objectType,
-        operation,
+        objectId: lowercaseStrings(objectId),
+        objectType: lowercaseStrings(objectType),
+        operation: lowercaseStrings(operation),
         previousState,
         currentState,
-        userId,
+        userId: lowercaseStrings(userId),
       },
     });
 
@@ -78,6 +79,30 @@ export const createAuditLog = async (
     res.status(201).json(newChangeLog);
   } catch (error) {
     console.error("Error creating audit log:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getObjectTypes = async (
+  _req: Request,
+  res: Response,
+) => {
+  try {
+    const objectTypes = await prisma.changeLog.findMany({
+      distinct: ["objectType"],
+      select: {
+        objectType: true,
+      },
+      orderBy: {
+        objectType: "asc"
+      }
+    });
+
+    res.status(200).json({
+      data: objectTypes.map((entry) => entry.objectType),
+    });
+  } catch (error) {
+    console.error("Error fetching object types:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

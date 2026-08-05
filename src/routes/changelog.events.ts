@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { changeLogEmitter } from "../services/changelogemitter.js";
+import { changeLogEmitter } from "../services/changeLogEmitter.js";
 
 export const changeLogEvents = (req: Request, res: Response) => {
   res.setHeader("Content-Type", "text/event-stream");

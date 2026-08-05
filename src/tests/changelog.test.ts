@@ -36,7 +36,13 @@ describe("Change Log endpoints", () => {
 
       expect(response.status).toBe(201);
 
-      expect(response.body).toMatchObject(payload);
+      expect(response.body).toMatchObject({
+        ...payload,
+        objectId: payload.objectId.toLowerCase(),
+        objectType: payload.objectType.toLowerCase(),
+        operation: payload.operation.toLowerCase(),
+        userId: payload.userId.toLowerCase(),
+      });
       expect(response.body.id).toBeDefined();
       expect(response.body.createdAt).toBeDefined();
 
@@ -47,7 +53,13 @@ describe("Change Log endpoints", () => {
       });
 
       expect(changeLog).not.toBeNull();
-      expect(changeLog).toMatchObject(payload);
+      expect(changeLog).toMatchObject({
+        ...payload,
+        objectId: payload.objectId.toLowerCase(),
+        objectType: payload.objectType.toLowerCase(),
+        operation: payload.operation.toLowerCase(),
+        userId: payload.userId.toLowerCase(),
+      });
     });
 
     it("should create an change log with a null previous state", async () => {
@@ -68,7 +80,14 @@ describe("Change Log endpoints", () => {
 
       expect(response.status).toBe(201);
 
-      expect(response.body).toMatchObject(payload);
+      expect(response.body).toMatchObject({
+        ...payload,
+        previousState: null,
+        objectId: payload.objectId.toLowerCase(),
+        objectType: payload.objectType.toLowerCase(),
+        operation: payload.operation.toLowerCase(),
+        userId: payload.userId.toLowerCase(),
+      });
 
       const count = await prisma.changeLog.count();
 
@@ -82,12 +101,14 @@ describe("Change Log endpoints", () => {
         objectId: "123",
         objectType: "Patient",
         operation: "update",
+        userId: "user-123",
       });
 
       await createChangeLog({
         objectId: "456",
         objectType: "Order",
         operation: "create",
+        userId: "user-123",
       });
 
       const response = await request(app)
@@ -102,7 +123,7 @@ describe("Change Log endpoints", () => {
       expect(response.body.data).toHaveLength(1);
       expect(response.body.data[0]).toMatchObject({
         objectId: "456",
-        objectType: "Order",
+        objectType: "order",
         operation: "create",
       });
 
@@ -131,7 +152,7 @@ describe("Change Log endpoints", () => {
         .get("/change-logs")
         .query({
           objectId: "123",
-          objectType: "Patient",
+          objectType: "patient",
         });
 
       expect(response.status).toBe(200);
@@ -139,7 +160,7 @@ describe("Change Log endpoints", () => {
       expect(response.body.data).toHaveLength(1);
       expect(response.body.data[0]).toMatchObject({
         objectId: "123",
-        objectType: "Patient",
+        objectType: "patient",
         operation: "update",
       });
 
@@ -148,6 +169,62 @@ describe("Change Log endpoints", () => {
         pageSize: 20,
         total: 1,
         totalPages: 1,
+      });
+    });
+  });
+
+  describe("GET /change-logs/object-types", () => {
+    it("should return all unique object types", async () => {
+      await createChangeLog({
+        objectId: "123",
+        objectType: "customer",
+        operation: "update",
+      });
+
+      await createChangeLog({
+        objectId: "456",
+        objectType: "order",
+        operation: "create",
+      });
+
+      await createChangeLog({
+        objectId: "457",
+        objectType: "order",
+        operation: "create",
+      });
+
+      await createChangeLog({
+        objectId: "778",
+        objectType: "product",
+        operation: "create",
+      });
+
+      const response = await request(app)
+        .get("/change-logs/object-types")
+        .expect(200);
+
+      const expected = await prisma.changeLog.findMany({
+        distinct: ["objectType"],
+        select: {
+          objectType: true,
+        },
+        orderBy: {
+          objectType: "asc"
+        }
+      })
+
+      expect(response.body).toEqual({
+        data: expected.map((entry) => entry.objectType),
+      });
+    });
+
+    it("should return an empty array when there are no change logs", async () => {
+      const response = await request(app)
+        .get("/change-logs/object-types")
+        .expect(200);
+
+      expect(response.body).toEqual({
+        data: [],
       });
     });
   });
