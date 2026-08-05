@@ -8,6 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://tracevault:tracevault@localhost:5435/tracevault_test
 
     steps:
       - name: Checkout
